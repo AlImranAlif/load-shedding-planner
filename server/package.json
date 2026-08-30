@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "db:init": "tsx src/initDb.ts",
+    "db:seed": "tsx src/seed.ts"
+  },
+  "dependencies": {
+    "cors": "latest",
+    "dotenv": "latest",
+    "express": "5.2.1",
+    "pg": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/cors": "latest",
+    "@types/express": "latest",
+    "@types/node": "latest",
+    "@types/pg": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
