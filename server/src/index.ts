@@ -176,6 +176,6 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
   res.status(500).json({ error: "Internal server error" });
 });
 
-app.listen(port, () => {
-  console.log(`PowerPlan API running at http://localhost:${port}`);
+app.listen(port, "0.0.0.0", () => {
+  console.log(`PowerPlan API running on port ${port}`);
 });
