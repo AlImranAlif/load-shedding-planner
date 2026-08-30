@@ -2,9 +2,45 @@
 
 ## P01 - Load-Shedding Window Planner
 
-PowerPlan is a full-stack scheduling application for small print and photocopy businesses that need to manage daily work during scheduled power cuts.
+PowerPlan is a full-stack scheduling application for small print and photocopy businesses that need to organize daily work around power cuts.
 
-The system allows the user to enter load-shedding windows, add jobs with different electricity requirements, automatically schedule those jobs, and calculate how many minutes the generator needs to run.
+The application allows users to enter load-shedding windows, add jobs with different electricity requirements, automatically generate a valid daily schedule, and calculate the generator usage required to complete the work.
+
+## Live Demo
+
+Frontend:
+
+```text
+https://load-shedding-planner-client.vercel.app
+```
+
+Backend API:
+
+```text
+https://load-shedding-planner.onrender.com
+```
+
+Backend health check:
+
+```text
+https://load-shedding-planner.onrender.com/api/health
+```
+
+---
+
+## Problem
+
+A small print and photocopy shop may lose grid electricity at different times each day.
+
+Different jobs have different power requirements:
+
+* some jobs require grid electricity
+* some jobs can continue using a generator
+* some jobs require no electricity
+
+Manually planning these jobs can create delays, unnecessary generator usage, and conflicts between jobs and power-cut periods.
+
+PowerPlan automatically builds a daily work schedule based on the outage windows and job requirements.
 
 ---
 
@@ -25,66 +61,81 @@ The system allows the user to enter load-shedding windows, add jobs with differe
 ### Database
 
 * PostgreSQL
+* Neon PostgreSQL for production
 * `pg` PostgreSQL driver
 
 ### Validation
 
 * Zod
 
+### Deployment
+
+* Vercel for the frontend
+* Render for the backend
+* Neon for PostgreSQL
+
 ---
 
-## Core Features
+## Hackathon Requirements
 
-### 1. Power-Cut Management
+PowerPlan implements all four required P01 features.
 
-Users can:
+### 1. Power-Cut Window Input
 
-* Add a power-cut start time
-* Add a power-cut end time
-* Add multiple outage windows
-* Remove outage windows
-* View outages on a 24-hour timeline
+Users can enter:
+
+* power-cut start time
+* power-cut end time
+
+The outage is displayed on a 24-hour timeline.
+
+The application also supports multiple outage windows for the same date.
 
 ### 2. Job Management
 
 Each job contains:
 
-* Job name
-* Duration in minutes
-* Power requirement
+* job name
+* duration in minutes
+* power requirement
 
 Supported power requirements:
 
-* `GRID_REQUIRED`
-* `GENERATOR_OK`
-* `NO_POWER`
+```text
+GRID_REQUIRED
+GENERATOR_OK
+NO_POWER
+```
 
-### 3. Automatic Scheduling
+### 3. Automatic Job Scheduling
 
-The application automatically places jobs on the daily timeline.
+Jobs are automatically placed on the daily timeline.
 
-The scheduling engine ensures that grid-dependent jobs never overlap a power-cut window.
+The scheduler ensures that jobs requiring grid electricity are never scheduled inside a power-cut period.
 
-### 4. Generator Usage
+### 4. Generator Minute Calculation
 
-The application calculates the total number of generator minutes required for the finished schedule.
+The application calculates the total generator minutes required by the finished schedule.
 
-Generator usage updates whenever:
+The value is recalculated whenever:
 
 * a job is added
 * a job is removed
 * a power cut is added
 * a power cut is removed
+* planner settings change
 
 ---
 
 ## Scheduling Rules
 
+Jobs are processed in queue order.
+
 ### GRID_REQUIRED
 
 These jobs require grid electricity.
 
-If a grid-required job would overlap a power cut, the scheduler moves it forward until the full job fits inside a continuous grid-powered period.
+If a job would overlap a power cut, the scheduler moves it forward until the complete job fits inside a continuous grid-powered period.
 
 Example:
 
@@ -94,16 +145,16 @@ Power Cut:
 
 Large Format Printing:
 Duration: 90 minutes
-Power: GRID_REQUIRED
+Power Requirement: GRID_REQUIRED
 ```
 
-The job will be placed outside the outage window.
+The job is moved outside the outage period.
 
 ### GENERATOR_OK
 
 These jobs can run using either grid electricity or the generator.
 
-If part of the job overlaps a power cut, the overlapping time is counted as generator usage.
+If any part of the job overlaps a power cut, the overlapping portion is counted as generator usage.
 
 Example:
 
@@ -131,12 +182,12 @@ Total generator usage:
 
 These jobs do not require electricity.
 
-Examples:
+Examples include:
 
-* Binding
-* Cutting
-* Packaging
-* Customer collection
+* binding
+* cutting
+* packaging
+* customer collection
 
 They can continue during a power cut without increasing generator usage.
 
@@ -147,16 +198,17 @@ They can continue during a power cut without increasing generator usage.
 PowerPlan also includes:
 
 * PostgreSQL persistence
-* Multiple outage windows
-* Date-based planning
-* Configurable shop opening and closing times
-* Generator cost per hour
-* Estimated generator operating cost
-* Detection of jobs that cannot fit into the working day
+* multiple outage windows
+* date-based planning
+* configurable shop opening and closing times
+* generator cost per hour
+* estimated generator operating cost
+* unscheduled-job detection
 * REST API
-* API input validation
-* Automatic schedule recalculation
+* API request validation
+* automatic schedule recalculation
 * 24-hour visual timeline
+* production deployment
 
 ---
 
@@ -172,16 +224,16 @@ Next.js Frontend
   v
 Node.js + Express Backend
   |
-  +-------------------+
-  |                   |
-  v                   v
-PostgreSQL      Scheduling Engine
-                       |
-                       v
-                Generated Plan
-                       |
-                       v
-                24-Hour Timeline
+  +----------------------+
+  |                      |
+  v                      v
+Neon PostgreSQL     Scheduling Engine
+                           |
+                           v
+                    Generated Daily Plan
+                           |
+                           v
+                    24-Hour Timeline
 ```
 
 ---
@@ -189,7 +241,7 @@ PostgreSQL      Scheduling Engine
 ## Repository Structure
 
 ```text
-p01-load-shedding-planner/
+load-shedding-planner/
 |
 ├── EVENT.md
 ├── README.md
@@ -214,7 +266,7 @@ p01-load-shedding-planner/
 
 ---
 
-# Installation
+# Local Installation
 
 ## Prerequisites
 
@@ -224,20 +276,20 @@ Install:
 * npm
 * PostgreSQL
 
-pgAdmin can also be used to manage the PostgreSQL database.
+pgAdmin can optionally be used for PostgreSQL management.
 
 ---
 
 ## 1. Clone the Repository
 
 ```bash
-git clone YOUR_REPOSITORY_URL
+git clone https://github.com/AlImranAlif/load-shedding-planner.git
 ```
 
-Enter the project folder:
+Enter the project directory:
 
 ```bash
-cd p01-load-shedding-planner
+cd load-shedding-planner
 ```
 
 ---
@@ -260,13 +312,13 @@ Servers
 → Database
 ```
 
-Set the database name to:
+Database name:
 
 ```text
 powerplan
 ```
 
-Or use the PostgreSQL command line:
+Alternatively:
 
 ```bash
 createdb -U postgres powerplan
@@ -276,7 +328,7 @@ createdb -U postgres powerplan
 
 ## 3. Configure Backend Environment Variables
 
-Inside the `server` folder, copy:
+Inside the `server` directory, copy:
 
 ```text
 .env.example
@@ -288,7 +340,7 @@ and create:
 .env
 ```
 
-Use:
+Example:
 
 ```env
 PORT=4000
@@ -304,7 +356,7 @@ YOUR_PASSWORD
 
 with your local PostgreSQL password.
 
-Do not commit the `.env` file to GitHub.
+Do not commit `server/.env` to GitHub.
 
 ---
 
@@ -322,10 +374,10 @@ to:
 client/.env.local
 ```
 
-The default backend API URL is:
+For local development, use:
 
-```text
-http://localhost:4000/api
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
 ```
 
 ---
@@ -350,7 +402,7 @@ npm run db:init
 
 This creates the required PostgreSQL tables.
 
-Optional demo data:
+Optional sample data:
 
 ```bash
 npm run db:seed
@@ -416,25 +468,60 @@ Power: NO_POWER
 
 PowerPlan automatically creates a valid schedule.
 
-* Large-format printing is placed outside the outage.
-* Photocopying can continue using the generator.
-* Binding can continue without electricity.
-* Generator minutes are calculated automatically.
+* large-format printing is placed outside the outage
+* photocopying may continue using the generator
+* binding can continue without electricity
+* generator usage is calculated automatically
 
 ---
 
-## Hackathon Requirements
+## API Endpoints
 
-PowerPlan implements all four required P01 features:
+### Health Check
 
-1. Enter power-cut start and end times and display them on a 24-hour timeline.
-2. Add jobs with a name, duration, and power requirement.
-3. Automatically schedule jobs so grid-required jobs do not overlap power cuts.
-4. Calculate total generator minutes and update them immediately when jobs are added or removed.
+```text
+GET /api/health
+```
+
+### Planner
+
+```text
+GET /api/planner?date=YYYY-MM-DD
+```
+
+### Add Power Cut
+
+```text
+POST /api/power-cuts
+```
+
+### Delete Power Cut
+
+```text
+DELETE /api/power-cuts/:id
+```
+
+### Add Job
+
+```text
+POST /api/jobs
+```
+
+### Delete Job
+
+```text
+DELETE /api/jobs/:id
+```
+
+### Update Planner Settings
+
+```text
+PATCH /api/settings
+```
 
 ---
 
-## Event
+## Event Requirement
 
 The required hackathon event start code is stored in:
 
@@ -448,7 +535,7 @@ EVENT.md
 
 Sensitive configuration files are excluded from GitHub.
 
-The following should remain ignored:
+The following files should remain ignored:
 
 ```text
 .env
@@ -460,10 +547,10 @@ node_modules/
 
 Only example environment files should be committed.
 
-Never place a real PostgreSQL password inside the README or `.env.example`.
+Never place real database credentials, passwords, or secret keys inside the repository.
 
 ---
 
 ## Project Goal
 
-PowerPlan helps small businesses organize daily work around load shedding, avoid scheduling grid-dependent jobs during outages, and understand how much generator operation is required to complete the day's work.
+PowerPlan helps small businesses organize daily work around load shedding, avoid scheduling grid-dependent jobs during outages, reduce unnecessary generator use, and understand the operational cost of completing the day's work.
